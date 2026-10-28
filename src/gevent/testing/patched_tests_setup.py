@@ -36,6 +36,7 @@ from .sysinfo import PY310
 
 from .sysinfo import WIN
 from .sysinfo import OSX
+from .sysinfo import LINUX
 
 from .sysinfo import LIBUV
 from .sysinfo import CFFI_BACKEND
@@ -783,6 +784,15 @@ if PYPY:
         'test_asyncore.TestAPI_UsePoll.test_handle_read',
     ]
 
+    if PY2 and LINUX:
+        disabled_tests += [
+            # PyPy2's cffi ssl module fails these local TLS handshakes with
+            # "SSLError: [SSL] internal error" against OpenSSL 3 (current Linux
+            # images); they passed against the OpenSSL 1.1 of Ubuntu 18.04.
+            'test_ftplib.TestTLS_FTPClass.test_check_hostname',
+            'test_ftplib.TestTLS_FTPClass.test_context',
+        ]
+
     if WIN:
         disabled_tests += [
             # Starting in 7.3.1 on Windows, this stopped raising ValueError; it appears to
@@ -1168,6 +1178,14 @@ if PY35:
         disabled_tests += [
             'test_ssl.ThreadedTests.test_crl_check',
             'test_ssl.BasicSocketTests.test_parse_cert',
+        ]
+
+    if LINUX and sys.version_info[:2] == (3, 10) and sys.version_info[2] > 0:
+        disabled_tests += [
+            # The test_ssl of later 3.10.x releases (the hosted 3.10 interpreter
+            # on current Ubuntu) expects handshake behaviour this 21.12 SSL
+            # wrapper predates; it passes against the 3.10.0 test suite.
+            'test_ssl.SimpleBackgroundTests.test_bio_handshake',
         ]
 
     if ARES:
